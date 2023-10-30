@@ -32,12 +32,11 @@
     #include <arpa/inet.h>
 #endif
 
-#define TARGET "127.0.0.1"
-
 // Creating socket file descriptor
 int sockfd;
 
-void sigint_handler(int s) {
+void safe_exit()
+{
     close(sockfd);
     #ifdef _WIN64
         WSACleanup();
@@ -45,7 +44,16 @@ void sigint_handler(int s) {
     exit(0);
 }
 
+void sigint_handler(int s) {
+    safe_exit();
+}
+
 int main(int argc, const char* argv[]) {
+    if (argc != 2) {
+        std::cout << "Usage: " << argv[0] << " target-ip" << std::endl;
+        return 0;
+    }
+
     #ifdef _WIN64
         WSADATA wsaData;
         if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
@@ -62,11 +70,17 @@ int main(int argc, const char* argv[]) {
     signal(SIGINT, sigint_handler);
 
     // Setup the server address
+    const char* target_addr = argv[1];
     struct sockaddr_in servaddr;
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(8080); // Port doesnt matter
-    servaddr.sin_addr.s_addr = inet_addr(TARGET);
+    servaddr.sin_addr.s_addr = inet_addr(target_addr);
+
+    if (servaddr.sin_addr.s_addr == INADDR_NONE) {
+        std::cerr << "Invalid IP address" << std::endl;
+        safe_exit();
+    }
 
     // Send message to server
     std::string message(512, 'a');
@@ -76,11 +90,7 @@ int main(int argc, const char* argv[]) {
             sizeof(servaddr));
     }
 
-    // Close the socket
-    close(sockfd);
-    #ifdef _WIN64
-        WSACleanup();
-    #endif
-
+    // I think this is redundant but I'll just leave it in here
+    safe_exit();
     return 0;
 }

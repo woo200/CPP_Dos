@@ -13,7 +13,7 @@ See the [License File](LICENSE.md) for more information.
 ```bash
 git clone https://github.com/woo200/CPP_Dos.git
 cd CPP_Dos
-g++ -o dostool dostool.cpp
+g++ -o dostool dos.cpp
 ```
 
 ### Windows:
@@ -22,7 +22,7 @@ Requires MinGW, which can be installed from [here](https://github.com/skeeto/w64
 ```bash
 git clone https://github.com/woo200/CPP_Dos.git
 cd CPP_Dos
-g++ -o dostool dostool.cpp -lws2_32 # Requires MinGW
+g++ -o dostool dos.cpp -lws2_32 # Requires MinGW
 ```
 
 ## Usage

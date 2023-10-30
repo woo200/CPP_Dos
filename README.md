@@ -1,7 +1,11 @@
 # DOSTool
 
 ## Description
-This is a very simple tool to flood UDP packets to a target. It is effective enough to completely wipe out my friends gigabit internet connection.
+This is a very simple tool to flood UDP packets to a target. It is effective enough to completely wipe out my friends gigabit internet connection. (With his consent, of course.)
+
+## Disclaimer
+This software, or any derivative works thereof, shall not be used to target any individual or entity without their express consent.
+See the [License File](LICENSE.md) for more information.
 
 ## Compiling
 

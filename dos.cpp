@@ -42,6 +42,7 @@ void sigint_handler(int s) {
     #ifdef _WIN64
         WSACleanup();
     #endif
+    exit(0);
 }
 
 int main(int argc, const char* argv[]) {

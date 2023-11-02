@@ -23,6 +23,7 @@
 #include <string>
 #include <signal.h>
 #include <unistd.h>
+#include <chrono>
 
 #ifdef _WIN64
     #include <winsock2.h>
@@ -48,9 +49,50 @@ void sigint_handler(int s) {
     safe_exit();
 }
 
-int main(int argc, const char* argv[]) {
-    if (argc != 2) {
-        std::cout << "Usage: " << argv[0] << " target-ip" << std::endl;
+void print_bps(int data_lensum)
+{
+    std::string unit = "B";
+    std::string unit2 = "b";
+    float data_len = data_lensum;
+    if (data_len > 1024)
+    {
+        data_len /= 1024;
+        unit = "KiB";
+        unit2 = "Kb";
+    }
+    if (data_len > 1024)
+    {
+        data_len /= 1024;
+        unit = "MiB";
+        unit2 = "Mb";
+    }
+    if (data_len > 1024)
+    {
+        data_len /= 1024;
+        unit = "GiB";
+        unit2 = "Gb";
+    }
+    std::cout << "\33[2K\rDEBUG: " << data_len << " " << unit << "/s" << " [" << data_len * 8 << " " << unit2 << "/s]" << std::flush;
+}
+
+int main(int argc, char** argv) {
+    int c;
+    bool debug = false;
+
+    while ((c = getopt(argc, argv, "d")) != -1)
+    {
+        switch (c)
+        {
+        case 'd':
+            debug = true;
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (argc - optind != 1) {
+        std::cout << "Usage: " << argv[0] << " [-d] target-ip" << std::endl;
         return 0;
     }
 
@@ -70,7 +112,7 @@ int main(int argc, const char* argv[]) {
     signal(SIGINT, sigint_handler);
 
     // Setup the server address
-    const char* target_addr = argv[1];
+    const char* target_addr = argv[optind];
     struct sockaddr_in servaddr;
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
@@ -84,10 +126,34 @@ int main(int argc, const char* argv[]) {
 
     // Send message to server
     std::string message(512, 'a');
+    int loops = 0;
+    auto start = std::chrono::high_resolution_clock::now();
+
     while (true) {
         sendto(sockfd, message.c_str(), message.size(),
            0, (const struct sockaddr *)&servaddr,
             sizeof(servaddr));
+        
+        // Debugging spaghetti
+        if (debug)
+        {
+            loops++;
+            if (loops < 1000)
+                continue;
+
+            auto end = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+            if (duration.count() >= 1)
+            {
+                int data_lensum = message.size() * loops;
+                float bps = data_lensum / duration.count();
+
+                print_bps(bps);
+
+                loops = 0;
+                start = std::chrono::high_resolution_clock::now();
+            }
+        }
     }
 
     // I think this is redundant but I'll just leave it in here
